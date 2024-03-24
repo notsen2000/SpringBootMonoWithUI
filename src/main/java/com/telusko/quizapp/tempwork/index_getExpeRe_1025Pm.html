@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Table</title>
+    <style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  .pagination {
+    display: inline-block;
+  }
+  .pagination button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  .pagination button.active {
+    background-color: #45a049;
+  }
+</style>
+</head>
+<body>
+
+<div id="table-container">
+    <table id="record-table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="table-body">
+        <!-- Records will be inserted here -->
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<script>
+  // Sample JSON data
+  const jsonData = [
+    { name: "John Doe", email: "john@example.com" },
+    { name: "Jane Smith", email: "jane@example.com" },
+    { name: "Bob Johnson", email: "bob@example.com" },
+    // Add more records as needed
+  ];
+
+  const recordsPerPage = 2;
+  let currentPage = 1;
+  let currentEditingIndex = -1;
+
+  function displayRecords(page) {
+    const startIndex = (page - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const recordsToDisplay = jsonData.slice(startIndex, endIndex);
+
+    const tableBody = document.getElementById("table-body");
+    tableBody.innerHTML = "";
+
+    recordsToDisplay.forEach((record, index) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${record.name}</td>
+        <td>${record.email}</td>
+        <td><button onclick="editRecord(${startIndex + index})">Edit</button></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function editRecord(index) {
+    const record = jsonData[index];
+    if (currentEditingIndex !== -1 && currentEditingIndex !== index) {
+      // Save the previously edited record if exists
+      saveRecord();
+    }
+    currentEditingIndex = index;
+    const tableRows = document.querySelectorAll("#record-table tbody tr");
+    const cells = tableRows[index % recordsPerPage].querySelectorAll("td");
+    cells[0].innerHTML = `<input type="text" value="${record.name}">`;
+    cells[1].innerHTML = `<input type="text" value="${record.email}">`;
+    const editButton = tableRows[index % recordsPerPage].querySelector("button");
+    editButton.innerText = "Save";
+    editButton.onclick = saveRecord;
+  }
+
+  function saveRecord() {
+    const tableRows = document.querySelectorAll("#record-table tbody tr");
+    const cells = tableRows[currentEditingIndex % recordsPerPage].querySelectorAll("td");
+    const newName = cells[0].querySelector("input").value;
+    const newEmail = cells[1].querySelector("input").value;
+    jsonData[currentEditingIndex] = { name: newName, email: newEmail };
+    currentEditingIndex = -1;
+    displayRecords(currentPage);
+  }
+
+  function updatePagination() {
+    const totalPages = Math.ceil(jsonData.length / recordsPerPage);
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      const button = document.createElement("button");
+      button.innerText = i;
+      button.addEventListener("click", () => {
+        currentPage = i;
+        displayRecords(currentPage);
+        updatePagination();
+      });
+      if (i === currentPage) {
+        button.classList.add("active");
+      }
+      pagination.appendChild(button);
+    }
+  }
+
+  displayRecords(currentPage);
+  updatePagination();
+</script>
+
+</body>
+</html>

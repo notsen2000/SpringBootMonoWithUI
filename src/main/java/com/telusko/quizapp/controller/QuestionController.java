@@ -30,19 +30,26 @@ public class QuestionController {
 
     @PostMapping("add")
     public ResponseEntity<String> addQuestion(@RequestBody Question question) {
-        return questionService.addQuestion(question);
+        questionService.addQuestion(question);
+        return ResponseEntity.ok().body("{\"message\": \"Success\"}");
     }
 
 
     @PutMapping("update")
-    public String updateQuestion(@RequestBody Question question) {
-        return questionService.updateQuestion(question);
+    public ResponseEntity<String> updateQuestion(@RequestBody Question question) {
+
+
+        questionService.updateQuestion(question);
+        return ResponseEntity.ok().body("{\"message\": \"Record Updated\"}");
     }
 
 
     @DeleteMapping("delete/{id}")
-    public String deleteQuestion(@PathVariable("id") int idValue) {
-        return questionService.deleteQuestion(idValue);
+    public ResponseEntity<String> deleteQuestion(@PathVariable("id") int idValue) {
+        System.out.println("Id value is deleie : "+idValue);
+         questionService.deleteQuestion(idValue);
+       // return questionService.deleteQuestion(idValue);
+        return ResponseEntity.ok().body("{\"message\": \"Record Deleted\"}");
     }
 
 }

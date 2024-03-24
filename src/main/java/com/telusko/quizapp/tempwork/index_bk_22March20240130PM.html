@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question CRUD</title>
+    <style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body>
+<h2>Questions</h2>
+<table id="questionsTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Question Title</th>
+        <th>Category</th>
+        <th>Difficulty Level</th>
+        <th>Option 1</th>
+        <th>Option 2</th>
+        <th>Option 3</th>
+        <th>Option 4</th>
+        <th>Right Answer</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Data will be inserted here dynamically -->
+    </tbody>
+</table>
+
+<script>
+
+const url = 'http://localhost:8080/question/allQuestions';
+
+
+
+    // Function to fetch questions data from backend and populate the table
+    function populateTable() {
+        fetch(url) // Replace '/api/questions' with your actual endpoint
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#questionsTable tbody');
+                tableBody.innerHTML = '';
+                data.forEach(question => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${question.id}</td>
+                        <td>${question.question_title}</td>
+                        <td>${question.category}</td>
+                        <td>${question.difficultylevel}</td>
+                        <td>${question.option1}</td>
+                        <td>${question.option2}</td>
+                        <td>${question.option3}</td>
+                        <td>${question.option4}</td>
+                        <td>${question.right_answer}</td>
+                        <td>
+                            <button onclick="editQuestion(${question.id})">Edit</button>
+                            <button onclick="deleteQuestion(${question.id})">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error('Error fetching questions:', error));
+    }
+
+
+async function editQuestion(id) {
+    const question_title = prompt('Enter new question_title:');
+    const category = prompt('Enter new category:');
+    const question = document.getElementById('employees');
+    var urlForEdit = 'http://localhost:8080/question/update';
+    //const response = await fetch(`${url}/${id}`, {
+    const response = await fetch(urlForEdit,{
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: category, question_title: question_title,id : id })
+    });
+    fetchEmployees();
+}
+
+    // Function to edit a question
+    function editQuestion(id) {
+        // Implement your edit logic here, e.g., opening a modal with a form for editing
+        console.log('Edit question with ID:', id);
+    }
+
+    // Function to delete a question
+    function deleteQuestion(id) {
+        // Implement your delete logic here, e.g., showing a confirmation dialog and making a DELETE request to the backend
+        console.log('Delete question with ID:', id);
+    }
+
+    // Call populateTable function when the page loads
+    window.onload = populateTable;
+</script>
+</body>
+</html>

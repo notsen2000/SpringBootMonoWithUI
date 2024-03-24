@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Table</title>
+    <style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  .pagination {
+    display: inline-block;
+  }
+  .pagination button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  .pagination button.active {
+    background-color: #45a049;
+  }
+
+    </style>
+</head>
+<body>
+
+<div id="table-container">
+    <table id="record-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>RowId</th>
+            <th>Question Title</th>
+            <th>Category</th>
+            <th>Difficulty Level</th>
+            <th>Option 1</th>
+            <th>Option 2</th>
+            <th>Option 3</th>
+            <th>Option 4</th>
+            <th>Right Answer</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="table-body">
+        <!-- Records will be inserted here -->
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<script>
+  // Sample JSON data
+  var jsonData = [
+    { name: "John Doe", email: "john@example.com" },
+    { name: "Jane Smith", email: "jane@example.com" },
+    { name: "Bob Johnson", email: "bob@example.com" },
+    // Add more records as needed
+  ];
+   const recordsPerPage = 5;
+  let currentPage = 1;
+  let currentEditingIndex = -1;
+
+
+
+
+  function displayRecords(page) {
+  const url = 'http://localhost:8080/question/allQuestions';
+  // Fetch data from the API
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      // Once data is fetched, call function to display records
+      console.log(data);
+      jsonData = data;
+        const startIndex = (page - 1) * recordsPerPage;
+        const endIndex = startIndex + recordsPerPage;
+        const recordsToDisplay = jsonData.slice(startIndex, endIndex);
+
+    const tableBody = document.getElementById("table-body");
+    tableBody.innerHTML = "";
+    let rowId = 1; // Initial ID
+    recordsToDisplay.forEach((record, index) => {
+   //console.log(record);
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${record.id}</td>
+        <td>${rowId}</td>
+        <td>${record.question_title}</td>
+        <td>${record.category}</td>
+        <td>${record.difficultylevel}</td>
+        <td>${record.option1}</td>
+        <td>${record.option2}</td>
+        <td>${record.option3}</td>
+        <td>${record.option4}</td>
+        <td>${record.right_answer}</td>
+        <td><button onclick="editRecord(${startIndex + index})">Edit</button></td>
+      `;
+      tableBody.appendChild(row);
+        rowId++;
+    });
+    updatePagination();
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+    });
+
+
+  }
+
+  function editRecord(index) {
+    const record = jsonData[index];
+    if (currentEditingIndex !== -1 && currentEditingIndex !== index) {
+      // Save the previously edited record if exists
+      saveRecord();
+    }
+    currentEditingIndex = index;
+    const tableRows = document.querySelectorAll("#record-table tbody tr");
+    const cells = tableRows[index % recordsPerPage].querySelectorAll("td");
+    cells[0].innerHTML = `<input type="text" value="${record.id}">`;
+    cells[2].innerHTML = `<input type="text" value="${record.question_title}">`;
+    cells[3].innerHTML = `<input type="text" value="${record.category}">`;
+    cells[4].innerHTML = `<input type="text" value="${record.difficultylevel}">`;
+    cells[5].innerHTML = `<input type="text" value="${record.option1}">`;
+    cells[6].innerHTML = `<input type="text" value="${record.option2}">`;
+    cells[7].innerHTML = `<input type="text" value="${record.option3}">`;
+    cells[8].innerHTML = `<input type="text" value="${record.option4}">`;
+    cells[9].innerHTML = `<input type="text" value="${record.right_answer}">`;
+    const editButton = tableRows[index % recordsPerPage].querySelector("button");
+    editButton.innerText = "Save";
+    editButton.onclick = saveRecord;
+  }
+
+  function saveRecord() {
+    const tableRows = document.querySelectorAll("#record-table tbody tr");
+    const cells = tableRows[currentEditingIndex % recordsPerPage].querySelectorAll("td");
+    console.log("cells:", cells); // Add this line to check cells
+
+   cells.forEach(cell => {
+        console.log("Val: " +cell.textContent);
+    });
+
+    const id = cells[0].querySelector("input").value;
+    const newQuestionTitle = cells[2].querySelector("input").value;
+    const newCategory = cells[3].querySelector("input").value;
+    const newDifficultylevel = cells[4].querySelector("input").value;
+    const newOption1 = cells[5].querySelector("input").value;
+    const newOption2 = cells[6].querySelector("input").value;
+    const newOption3 = cells[7].querySelector("input").value;
+    const newOption4 = cells[8].querySelector("input").value;
+    const newRightAnswer = cells[9].querySelector("input").value;
+     console.log("newTitle: " +newQuestionTitle);
+      console.log("newCategory: " +newCategory);
+    jsonData[currentEditingIndex] = {
+    question_title: newQuestionTitle, category: newCategory ,
+    difficultylevel: newDifficultylevel, option1: newOption1 ,
+    option2: newOption2, option3: newOption3 ,
+    option4: newOption4, right_answer: newRightAnswer
+      };
+
+
+   var data = {
+    "id": id,
+    "question_title": newQuestionTitle,
+    "category": newCategory,
+    "difficultylevel": newDifficultylevel,
+    "option1": newOption1,
+    "option2": newOption2,
+    "option3": newOption3,
+    "option4": newOption4,
+    "right_answer": newRightAnswer
+};
+console.log("rec-data:", JSON.stringify(data));
+   currentEditingIndex = -1;
+   console.log("currentEditingIndex  :"+ currentEditingIndex);
+    //console.log("Edited Record : "+ jsonData[currentEditingIndex]);
+    //console.log("rec :" + jsonData[1]);
+    console.log("Edited Record : "+ JSON.stringify(jsonData[currentEditingIndex]));
+
+    const urlForEdit = 'http://localhost:8080/question/update';
+    fetch(urlForEdit, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Question updated successfully:', data);
+            if (data.message === "Record Updated") {
+                // After successful update, populate the table again to reflect changes
+
+
+                 displayRecords(currentPage);
+            } else {
+                 console.error('Unexpected response from server:', data);
+            }
+
+        })
+        .catch(error => {
+            console.error('There was a problem updating the question:', error);
+        });
+
+
+
+  }
+
+  function updatePagination() {
+    const totalPages = Math.ceil(jsonData.length / recordsPerPage);
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      const button = document.createElement("button");
+      button.innerText = i;
+      button.addEventListener("click", () => {
+        currentPage = i;
+        displayRecords(currentPage);
+        updatePagination();
+      });
+      if (i === currentPage) {
+        button.classList.add("active");
+      }
+      pagination.appendChild(button);
+    }
+  }
+
+  displayRecords(currentPage);
+
+
+</script>
+
+</body>
+</html>
