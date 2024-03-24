@@ -1,0 +1,155 @@
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class Employee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String position;
+
+    // Getters and setters
+}
+
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+}
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @GetMapping
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
+
+    @PostMapping
+    public Employee createEmployee(@RequestBody Employee employee) {
+        return employeeRepository.save(employee);
+    }
+
+    @GetMapping("/{id}")
+    public Employee getEmployeeById(@PathVariable Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id " + id));
+    }
+
+    @PutMapping("/{id}")
+    public Employee updateEmployee(@PathVariable Long id, @RequestBody Employee employeeDetails) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id " + id));
+        employee.setName(employeeDetails.getName());
+        employee.setPosition(employeeDetails.getPosition());
+        return employeeRepository.save(employee);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteEmployee(@PathVariable Long id) {
+        employeeRepository.deleteById(id);
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Employee Management</h1>
+
+    <div id="employees"></div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+h1 {
+    color: #333;
+}
+
+.employee {
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+}
+
+button {
+    margin-top: 10px;
+}
+
+
+const url = 'http://localhost:8080/api/employees';
+
+async function fetchEmployees() {
+    const response = await fetch(url);
+    const employees = await response.json();
+    displayEmployees(employees);
+}
+
+function displayEmployees(employees) {
+    const container = document.getElementById('employees');
+    container.innerHTML = '';
+    employees.forEach(employee => {
+        const div = document.createElement('div');
+        div.classList.add('employee');
+        div.innerHTML = `
+            <p><strong>Name:</strong> ${employee.name}</p>
+            <p><strong>Position:</strong> ${employee.position}</p>
+            <button onclick="editEmployee(${employee.id})">Edit</button>
+            <button onclick="deleteEmployee(${employee.id})">Delete</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+async function addEmployee() {
+    const name = prompt('Enter employee name:');
+    const position = prompt('Enter employee position:');
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, position })
+    });
+    fetchEmployees();
+}
+
+async function editEmployee(id) {
+    const newName = prompt('Enter new name:');
+    const newPosition = prompt('Enter new position:');
+    const response = await fetch(`${url}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, position: newPosition })
+    });
+    fetchEmployees();
+}
+
+async function deleteEmployee(id) {
+    const response = await fetch(`${url}/${id}`, { method: 'DELETE' });
+    fetchEmployees();
+}
+
+fetchEmployees();
+
+

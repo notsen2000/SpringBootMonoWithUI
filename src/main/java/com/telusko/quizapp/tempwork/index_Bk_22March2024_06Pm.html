@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question CRUD</title>
+    <style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body>
+<h2>Questions</h2>
+<table id="questionsTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>RowId</th>
+        <th>Question Title</th>
+        <th>Category</th>
+        <th>Difficulty Level</th>
+        <th>Option 1</th>
+        <th>Option 2</th>
+        <th>Option 3</th>
+        <th>Option 4</th>
+        <th>Right Answer</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Data will be inserted here dynamically -->
+    </tbody>
+</table>
+
+<script>
+    // Function to fetch questions data from backend and populate the table
+    const url = 'http://localhost:8080/question/allQuestions';
+    function populateTable() {
+    console.log("i called");
+        fetch(url) // Replace '/api/questions' with your actual endpoint
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#questionsTable tbody');
+                tableBody.innerHTML = '';
+                 let rowId = 1; // Initial ID
+                data.forEach(question => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <!--<td>${question.id}</td>-->
+                        <td > <input type="text" name="id" value="${question.id}" class="editInput" disabled "></td>
+                        <td>${rowId}</td>
+                        <td><input type="text" name="question_title" value="${question.question_title}" class="editInput" disabled></td>
+                        <td><input type="text"  name="category" value="${question.category}" class="editInput" disabled></td>
+                        <td><input type="text"  name="difficultylevel" value="${question.difficultylevel}" class="editInput" disabled></td>
+                        <td><input type="text"  name="option1" value="${question.option1}" class="editInput" disabled></td>
+                        <td><input type="text"  name="option2" value="${question.option2}" class="editInput" disabled></td>
+                        <td><input type="text"  name="option3" value="${question.option3}" class="editInput" disabled></td>
+                        <td><input type="text"  name="option4" value="${question.option4}" class="editInput" disabled></td>
+                        <td><input type="text"  name="right_answer" value="${question.right_answer}" class="editInput" disabled></td>
+                        <td>
+                            <!--<button onclick="editQuestion(${question.id})">Edit</button>-->
+                             <button onclick="editQuestion(${rowId})">Edit</button>
+                            <button onclick="updateRowData(${rowId})" style="display: none;">Save</button>
+                            <button onclick="deleteQuestion(${rowId})">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                    rowId++;
+                });
+            })
+            .catch(error => console.error('Error fetching questions:', error));
+    }
+
+    // Function to enable editing of a question
+    function editQuestion(id) {
+        const row = document.querySelector(`#questionsTable tbody tr:nth-child(${id})`);
+        const editInputs = row.querySelectorAll('.editInput');
+        editInputs.forEach(input => input.disabled = false);
+
+
+        const editButton = row.querySelector('button:nth-child(1)');
+        const saveButton = row.querySelector('button:nth-child(2)');
+        editButton.style.display = 'none';
+        saveButton.style.display = 'inline-block';
+
+        const inputs = row.querySelectorAll('input[name="id"]'); // Find input elements by name
+            inputs.forEach(input => {
+                input.disabled = true; // Disable each input element
+
+            });
+    }
+
+
+
+function updateRowData(rowId) {
+
+    const row = document.querySelector(`#questionsTable tbody tr:nth-child(${rowId})`);
+    const editInputs = row.querySelectorAll('.editInput');
+    //const rowData = {"id":rowId};
+    const rowData = {};
+
+    editInputs.forEach(input => {
+      //  rowData[input.name] = input.value;
+        const fieldName =  mapInputToCustomField(input.name);
+        const fieldValue = input.value;
+        console.log("fieldName is " +fieldName);
+        console.log("fieldValue is : " +fieldValue);
+        // Assign the value to the corresponding field in the POJO
+        rowData[fieldName] = fieldValue;
+
+
+    });
+
+console.log("JSON.stringify(rowData):" +JSON.stringify(rowData));
+
+    const urlForEdit = 'http://localhost:8080/question/update';
+    fetch(urlForEdit, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(rowData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Question updated successfully:', data);
+            if (data.message === "Record Updated") {
+                // After successful update, populate the table again to reflect changes
+                 populateTable();
+            } else {
+                 console.error('Unexpected response from server:', data);
+            }
+
+        })
+        .catch(error => {
+            console.error('There was a problem updating the question:', error);
+        });
+}
+
+
+
+function mapInputToCustomField(inputName) {
+             switch (inputName) {
+                case 'id':
+                    return 'id';
+                case 'question_title':
+                    return 'question_title';
+                case 'category':
+                    return 'category';
+                case 'difficulty_level':
+                    return 'difficulty_level';
+                case 'option1':
+                    return 'option1';
+				case 'option2':
+                    return 'option2';
+				case 'option3':
+                    return 'option3';
+				case 'option4':
+                    return 'option4';
+				case 'right_answer':
+                    return 'right_answer';
+                default:
+                    return inputName;
+            }
+        }
+
+    // Function to save changes to a question
+    function saveQuestion(id) {
+        const row = document.querySelector(`#questionsTable tbody tr:nth-child(${id})`);
+        const editInputs = row.querySelectorAll('.editInput');
+        const updatedQuestion = {};
+        editInputs.forEach(input => {
+            updatedQuestion[input.parentElement.parentElement.children[0].textContent.toLowerCase()] = input.value;
+            input.disabled = true;
+        });
+const rowData = {};
+
+         editInputs.forEach(input => {
+        rowData[input.name] = input.value;
+    });
+console.log(rowData);
+
+        // Send updatedQuestion to backend API for saving/updating the record
+        // Here you should make a PUT or PATCH request to your backend
+
+        const editButton = row.querySelector('button:nth-child(1)');
+        const saveButton = row.querySelector('button:nth-child(2)');
+        editButton.style.display = 'inline-block';
+        saveButton.style.display = 'none';
+    }
+
+    // Function to delete a question
+    function deleteQuestion(id) {
+        // Implement your delete logic here, e.g., showing a confirmation dialog and making a DELETE request to the backend
+        console.log('Delete question with ID:', id);
+    }
+
+    // Call populateTable function when the page loads
+    window.onload = populateTable;
+</script>
+</body>
+</html>
